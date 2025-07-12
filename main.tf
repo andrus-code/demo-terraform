@@ -1,10 +1,33 @@
+####### Variables #######
+
+variable "ami_id" {
+  description = "ID de la AMI para la instancia EC2"
+  default     = "ami-0150ccaf51ab55a51"
+}
+
+variable "instance_type" {
+  description = "Tipo de instancia EC2"
+  default     = "t3.micro"
+}
+
+variable "server_name" {
+  description = "Nombre del servidor web"
+  default     = "nginx-server"
+}
+
+variable "environment" {
+  description = "Ambiente de la aplicación"
+  default     = "test"
+}
+
+
 provider "aws" {
   region = "us-east-1"
 }
 
 resource "aws_instance" "nginx-server" {
-  ami           = "ami-0150ccaf51ab55a51"
-  instance_type = "t3.micro"
+  ami           = var.ami_id
+  instance_type = var.instance_type
 
   user_data = <<-EOF
               #!/bin/bash
@@ -20,8 +43,8 @@ resource "aws_instance" "nginx-server" {
   ]
 
    tags = {
-    Name        = "nginx-server"
-    Environment = "test"
+    Name        = var.server_name
+    Environment = var.environment
     Owner       = "cas@cs.uns.edu.ar"
     Team        = "DevOps"
     Project     = "workshop"
@@ -29,14 +52,15 @@ resource "aws_instance" "nginx-server" {
 }
 
 
-
+######  ssh #######
+# ssh-keygen -t rsa -b 2048 -f "nginx-server.key"
 resource "aws_key_pair" "nginx-server-ssh" {
-  key_name   = "nginx-server-ssh"
-  public_key = file("nginx-server.key.pub")
+  key_name   = "${var.server_name}-ssh"
+  public_key = file("${var.server_name}.key.pub")
 
 tags = {
-    Name        = "nginx-server-ssh"
-    Environment = "test"
+    Name        = "${var.server_name}-ssh"
+    Environment = "${var.environment}"
     Owner       = "cas@cs.uns.edu.ar"
     Team        = "DevOps"
     Project     = "workshop"
@@ -46,7 +70,7 @@ tags = {
 
 
 resource "aws_security_group" "nginx-server-sg" {
-  name        = "nginx-server-sg"
+  name        = "${var.server_name}-sg"
   description = "Security group allowing SSH and HTTP access"
 
   ingress {
@@ -72,8 +96,8 @@ resource "aws_security_group" "nginx-server-sg" {
 
 
 tags = {
-    Name        = "nginx-server-sg"
-    Environment = "test"
+    Name        = "${var.server_name}-sg"
+    Environment = "${var.environment}"
     Owner       = "cas@cs.uns.edu.ar"
     Team        = "DevOps"
     Project     = "workshop"
